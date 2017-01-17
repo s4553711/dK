@@ -1,0 +1,33 @@
+#!/bin/bash
+
+function USAGE {
+echo "Usage: dk [actions] [options] ...
+Actions:
+	ps
+	list
+	run
+"
+}
+
+if [ "$#" == "0" ]; then
+	USAGE
+	exit 1
+fi
+
+while [ $# -ge 1 ]; do
+	case "$1" in
+		ps)
+			shift
+			echo "ps $1"
+			;;
+		status)
+			shift
+			echo "list $1"
+			;;
+		run)
+			shift
+			echo "run $1"
+			;;
+	esac
+	shift
+done

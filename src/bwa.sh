@@ -25,8 +25,9 @@ preload() {
 }
 
 run() {
+	source bwa.ini
 	log $(basename ${BASH_SOURCE[0]})
-	log "cmd: bwa mem $(join_by " " ${@:2})"
+	log "cmd: $bwa mem $ref $(join_by " " ${@:2})"
 	#exec "${BWA} mem -t 10 -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\" ${REF} 2> bwa.log"
 }
 

@@ -26,7 +26,18 @@ while [ $# -ge 1 ]; do
 			;;
 		run)
 			shift
-			echo "run $1"
+			echo "dk > pipeline: $1: $#"
+			pipeline=$1
+			if [ $# -eq 2 ]; then
+				shift
+				method=$1
+			else
+				method="flow"
+			fi
+			shift
+			source $(dirname $(readlink -f bin/dk))/../src/${pipeline}.sh
+			echo "dK > execute ${pipeline}.sh ,method: $method"
+			${method} $@
 			;;
 	esac
 	shift

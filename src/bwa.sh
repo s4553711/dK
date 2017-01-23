@@ -1,24 +1,6 @@
 #!/bin/bash
-log() {
-	echo "[$(date +"%Y-%m-%d %H:%M:%S") "`hostname`"] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), INFO: $1"
-}
-
-error() {
-	echo "[$(date +"%Y-%m-%d %H:%M:%S") "`hostname`"] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), ERROR: $1"
-}
-
-join_by() { local IFS="$1"; shift; echo "$*"; }
-
-exec() {
-	cmd=$1
-	set -x
-	eval "$cmd"
-
-	if [ $? -ne 0  ]; then
-		error "Job failed"
-		exit 100
-	fi
-}
+DIR="$(cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd)"
+source $DIR/common.sh
 
 preload() {
 	log 'preload'
@@ -36,9 +18,10 @@ run() {
 	SAMPLE=${3:-123}
 	PLATFORM="ILLUMINA"
 
+	mkdir ${result}
 	log $(basename ${BASH_SOURCE[0]})
-	log "cmd: $bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${BamName}.bam"
-	#exec "cmd: $bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${BamName}.bam"
+	log "cmd: $bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${result}/${BamName}.bam"
+	exec "$bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${result}/${BamName}.bam"
 }
 
 cleanup() {

@@ -1,10 +1,10 @@
 #!/bin/bash
 log() {
-	echo "[$(date +"%Y-%m-%d %H:%M:%S")] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), INFO: $1"
+	echo "[$(date +"%Y-%m-%d %H:%M:%S") "`hostname`"] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), INFO: $1"
 }
 
 error() {
-	echo "[$(date +"%Y-%m-%d %H:%M:%S")] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), ERROR: $1"
+	echo "[$(date +"%Y-%m-%d %H:%M:%S") "`hostname`"] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), ERROR: $1"
 }
 
 join_by() { local IFS="$1"; shift; echo "$*"; }
@@ -22,21 +22,31 @@ exec() {
 
 preload() {
 	log 'preload'
+	for arg in $@; do
+		if [[ "$arg" =~ gz$ ]] && [[ ! -e $arg ]]; then
+			error "$arg didn't exist. Process terminated right now."
+			exit 100
+		fi
+	done
 }
 
 run() {
 	source bwa.ini
+	BamName=`basename $1 | sed -e 's/_R1_/_/g' -e 's/fastq\///g' -e 's/\//_/g'`
+	SAMPLE=${3:-123}
+	PLATFORM="ILLUMINA"
+
 	log $(basename ${BASH_SOURCE[0]})
-	log "cmd: $bwa mem $ref $(join_by " " ${@:2})"
-	#exec "${BWA} mem -t 10 -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\" ${REF} 2> bwa.log"
+	log "cmd: $bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${BamName}.bam"
+	#exec "cmd: $bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${BamName}.bam"
 }
 
 cleanup() {
 	log "cleanup"
 }
 
-flow () {
-	preload
+main () {
+	preload $@
 	run $@
 	cleanup
 }
@@ -44,5 +54,5 @@ flow () {
 RUNNING="$(basename $0)"
 if [[ "$RUNNING" == "bwa.sh" ]]
 then
-	flow $@
+	main $@
 fi

@@ -26,13 +26,13 @@ while [ $# -ge 1 ]; do
 			;;
 		run)
 			shift
-			echo "dk > pipeline: $1: $#"
+			echo "dk > pipeline: $1, # of arg: $#"
 			pipeline=$1
-			if [ $# -eq 2 ]; then
+			if [ $# -ge 2 ]; then
 				shift
 				method=$1
 			else
-				method="flow"
+				method="main"
 			fi
 			shift
 			source $(dirname $(readlink -f bin/dk))/../src/${pipeline}.sh

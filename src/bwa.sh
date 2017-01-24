@@ -12,6 +12,17 @@ preload() {
 	done
 }
 
+postBamProcess() {
+	inputBam=$1
+	sortedName=$(echo $inputBam | sed 's/\.bam/\.sort/g')
+
+	log "cmd: $samtools sort ${inputBam} ${sortedName}"
+	exec "$samtools sort ${inputBam} ${sortedName}"
+
+	log "cmd: $samtools index ${sortedName}.bam"
+	exec "$samtools index ${sortedName}.bam"
+}
+
 run() {
 	source bwa.ini
 	BamName=`basename $1 | sed -e 's/_R1_/_/g' -e 's/fastq\///g' -e 's/\//_/g'`
@@ -29,8 +40,11 @@ cleanup() {
 }
 
 main () {
+	source bwa.ini
+	BamName=`basename $1 | sed -e 's/_R1_/_/g' -e 's/fastq\///g' -e 's/\//_/g'`
 	preload $@
 	run $@
+	(samtools=$samtools; postBamProcess ${result}/${BamName}.bam)
 	cleanup
 }
 

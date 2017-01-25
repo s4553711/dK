@@ -13,10 +13,11 @@ run() {
 	source gatk.ini
 	inputBam=$1
 	contig=$2
+	contig_setting=$([[ ! -z $contig ]] && echo "-L ${contig} || echo ''")
 	cmd="java -Xmx4096m -Djava.io.tmpdir=${tmp} \
 			-jar ${gatkJar} \
 			-T RealignerTargetCreator \
-			-L ${contig} \
+			${contig_setting} \
 			-I ${inputBam} \
 			-R ${ref} \
 			-o ${result}/clean.intervals ${realignSnp} \
@@ -28,7 +29,7 @@ run() {
 	cmd="java -Xmx4096m -Djava.io.tmpdir=${tmp} \
 			-jar ${gatkJar} \
 			-T IndelRealigner \
-			-L ${contig} \
+			${contig_setting} \
 			-I ${inputBam} \
 			-R ${ref} \
 			${realignSnp} \

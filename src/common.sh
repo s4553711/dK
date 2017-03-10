@@ -1,6 +1,6 @@
 #!/bin/bash
 log() {
-	out=$(echo $scriptFile|sed 's/\.sh/\.log/g')
+	out=$(echo $scriptFile|sed 's/\.sh/\.pipeline\.log/g')
 	if [ -z $out ]; then
 		echo "[$(date +"%Y-%m-%d %H:%M:%S") "`hostname`"] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), INFO: $1"
 	else
@@ -9,7 +9,7 @@ log() {
 }
 
 error() {
-	out=$(echo $scriptFile|sed 's/\.sh/\.log/g')
+	out=$(echo $scriptFile|sed 's/\.sh/\.pipeline\.log/g')
 	if [ -z $out ]; then
 		echo "[$(date +"%Y-%m-%d %H:%M:%S") "`hostname`"] $(basename ${BASH_SOURCE[0]}|sed 's/\.sh//g'), ERROR: $1"
 	else

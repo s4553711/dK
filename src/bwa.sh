@@ -14,25 +14,21 @@ preload() {
 
 postBamProcess() {
 	inputBam=$1
-	sortedName=$(echo $inputBam | sed 's/\.bam/\.sort/g')
+	sortedName=$(echo $inputBam | sed 's/\.bam/\.sort\.bam/g')
 
-	log "cmd: $samtools sort ${inputBam} ${sortedName}"
-	exec "$samtools sort ${inputBam} ${sortedName}"
-
-	log "cmd: $samtools index ${sortedName}.bam"
-	exec "$samtools index ${sortedName}.bam"
+	cmd="$samtools sort ${inputBam} -o ${sortedName} && $samtools index ${sortedName}"
+	log "cmd: $cmd"
+	exec "$cmd"
 }
 
 run() {
-	source bwa.ini
-	BamName=`basename $1 | sed -e 's/_R1_/_/g' -e 's/fastq\///g' -e 's/\//_/g'`
-	SAMPLE=${3:-123}
 	PLATFORM="ILLUMINA"
-
-	mkdir ${result}
+	ERROR_LOG="bwa.${SAMPLE}.err"
 	log $(basename ${BASH_SOURCE[0]})
-	log "cmd: $bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${result}/${BamName}.bam"
-	exec "$bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" $ref $(join_by " " $@) | $samtools view -hSb - > ${result}/${BamName}.bam"
+	cmd="$bwa mem -t ${thread} -R \"@RG\tID:${SAMPLE}\tSM:${SAMPLE}\tLB:${SAMPLE}\tPL:${PLATFORM}\" \
+		$ref $(join_by " " $@) 2>${ERROR_LOG} | $samtools view -hSb - > ${result}/${BamName}.bam 2>>${ERROR_LOG}"
+	log "cmd: $cmd"
+	exec "$cmd"
 }
 
 cleanup() {
@@ -40,12 +36,22 @@ cleanup() {
 }
 
 main () {
-	source bwa.ini
-	BamName=`basename $1 | sed -e 's/_R1_/_/g' -e 's/fastq\///g' -e 's/\//_/g'`
-	preload $@
-	run $@
-	(samtools=$samtools; postBamProcess ${result}/${BamName}.bam)
-	cleanup
+	(
+		source bwa.ini
+		SAMPLE=${3:-123}
+		if [[ "$1" =~ "/dev/fd" ]]; then
+			BamName=$SAMPLE
+		else
+			BamName=`basename $1 | sed -e 's/_R1_/_/g' -e 's/fastq\///g' -e 's/\//_/g'`
+		fi
+		[[ -e ${result} ]] && rm -rf ${result}
+		mkdir ${result}
+		scriptFile="$PWD/bwa.${SAMPLE}.sh"
+		preload $@
+		run $@
+		(samtools=$samtools; postBamProcess ${result}/${BamName}.bam)
+		cleanup
+	)
 }
 
 RUNNING="$(basename $0)"
